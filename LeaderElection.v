@@ -132,3 +132,13 @@ Inductive abs_step : aprotocol_st -> label -> aprotocol_st -> Prop :=
       s1 --[Eps]-->_a s2
 
 where "s1 --[ l ]-->_a s2" := (abs_step s1 l s2).
+
+(* Not sure how this should look *)
+Lemma Send_left : forall s1 s2 s3 s4 l1 l2 l3 :
+    s1 --[ l1 ]-->_c s2 ->
+    s2 --[ l2 ]-->_c (Send ...) ->
+    (Send ...) --[ l3 ]-->_c s4 ->
+    exists l1' l2' l3' s2',
+      s1 --[ l1' ]-->_c (Send ...) ->
+      (Send ...) --[ l2' ]-->_c s2' ->
+      s2' --[ l3' ]-->_c s4.
