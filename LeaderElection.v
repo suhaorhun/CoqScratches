@@ -15,19 +15,19 @@ Variable (n : nat).
 
 (* state per node *)
 Record node_st :=
-  { count : nat
+  { rcount : nat
   ; max : nat
   ; has_sent : {ffun 'I_n -> bool}
   }.
 
 Definition set_send_node (s : node_st) i : node_st :=
-  {| count := s.(count)
+  {| rcount := s.(rcount)
    ; max := s.(max)
    ; has_sent := update s.(has_sent) i (fun _ => true)
   |}.
 
 Definition node_recv (s : node_st) m :=
-  {| count := s.(count).+1
+  {| rcount := s.(rcount).+1
    ; max := maxn s.(max) m
    ; has_sent := s.(has_sent)
   |}.
@@ -54,7 +54,15 @@ Definition do_recv (s : protocol_st) m i :=
    ; queues := update s.(queues) i (fun pq => rem m pq)
    |}.
 
-Inductive label := Eps | Decide of nat.
+Definition get_max (s : protocol_st) i :=
+  (s.(node_sts) i).(max).
+
+Inductive label := Eps | Decided of nat.
+
+Definition get_label s i :=
+  if (s.(node_sts) i).(rcount) < n
+  then Eps
+  else Decided (get_max s i).
 
 Reserved Notation "s1 --[ l ]--> s2" (at level 30).
 
@@ -69,10 +77,20 @@ Inductive concrete_step : protocol_st -> label -> protocol_st -> Prop :=
 
   | Recv :
     forall s1 i (m : 'I_n),
+      (* (s1.(node_sts) i).(rcount).+1 < n -> *)
       val m \in s1.(queues) i ->
       let s2 := do_recv s1 i m in
    (* ---------------------------- *)
-      s1 --[Eps]--> s2
+      s1 --[get_label s2 i]--> s2
+
+  (* | Decide : *)
+  (*   forall s1 i (m : 'I_n), *)
+  (*     (s1.(node_sts) i).(rcount).+1 = n -> *)
+  (*     val m \in s1.(queues) i -> *)
+  (*     let s2 := do_recv s1 i m in *)
+  (*  (* ---------------------------- *) *)
+  (*     s1 --[Decided (get_max s2 i) ]--> s2 *)
 
 where "s1 --[ l ]--> s2" := (concrete_step s1 l s2).
 
+About count.
